@@ -1,44 +1,67 @@
-# Este algoritmo implementa la Regla de la Cadena en probabilidad.
-# La Regla de la Cadena se utiliza para calcular la probabilidad conjunta de varios eventos
-# en función de las probabilidades condicionales de los eventos.
+#Algoritmo Regla de la Cadena aplicado a la produccion de modulo electronicos 
+#Joaquin Monroy Navarro_22310267
+#Descripcion
+#Este programa la probabilidad de que un modulo elecronico pase 
+#todas las etapas de produccion (inspeccion, soldadura, pruebas)
+#utilizando la Regla de Cadena en probabilidad 
+#
 
-# Definimos una función que calcula la probabilidad conjunta de una lista de eventos
-# utilizando la Regla de la Cadena.
+
+# Algoritmo: Regla de la Cadena aplicado a la producción de módulos electrónicos
+# Autor: Ejemplo educativo
+# Descripción:
+# Este programa calcula la probabilidad de que un módulo electrónico pase
+# todas las etapas del proceso de producción (inspección, soldadura, pruebas)
+# utilizando la Regla de la Cadena en probabilidad.
+
 def regla_de_la_cadena(probabilidades_condicionales):
     """
-    Calcula la probabilidad conjunta de una lista de eventos utilizando la Regla de la Cadena.
+    Calcula la probabilidad conjunta mostrando paso a paso cómo se aplica la
+    Regla de la Cadena en probabilidad.
 
     :param probabilidades_condicionales: Lista de probabilidades condicionales en orden.
     :return: Probabilidad conjunta de los eventos.
     """
-    # Inicializamos la probabilidad conjunta en 1 (neutro multiplicativo)
     probabilidad_conjunta = 1.0
 
-    # Iteramos sobre las probabilidades condicionales y las multiplicamos
-    for probabilidad in probabilidades_condicionales:
+    print("=== PROCESO DE CÁLCULO ===")
+    for i, probabilidad in enumerate(probabilidades_condicionales, start=1):
+        print(f"Etapa {i}: Multiplicamos {round(probabilidad_conjunta, 4)} x {probabilidad}")
         probabilidad_conjunta *= probabilidad
+        print(f"  → Resultado parcial tras etapa {i}: {round(probabilidad_conjunta, 4)}\n")
 
-    # Retornamos la probabilidad conjunta calculada
     return probabilidad_conjunta
 
 
-# Ejemplo práctico:
-# Supongamos que queremos calcular la probabilidad conjunta de tres eventos A, B y C:
-# P(A ∩ B ∩ C) = P(A) * P(B | A) * P(C | A ∩ B)
-# Donde:
-# P(A) = 0.6 (probabilidad de que ocurra el evento A)
-# P(B | A) = 0.5 (probabilidad de que ocurra B dado que ocurrió A)
-# P(C | A ∩ B) = 0.4 (probabilidad de que ocurra C dado que ocurrieron A y B)
+# Caso práctico en industria electrónica:
+# Etapas de producción de un módulo:
+# 1. Inspección de componentes: P(A) = 0.95
+# 2. Soldadura automatizada: P(B|A) = 0.90
+# 3. Prueba funcional intermedia: P(C|A∩B) = 0.85
+# 4. Prueba de estrés térmico: P(D|A∩B∩C) = 0.80
 
-# Definimos las probabilidades condicionales en orden
-probabilidades = [0.6, 0.5, 0.4]
 
-# Calculamos la probabilidad conjunta utilizando la función
+# Nombres de las etapas para referencia
+etapas = [
+    "Inspección de componentes",
+    "Soldadura automatizada",
+    "Prueba funcional intermedia",
+    "Prueba de estrés térmico"
+]
+
+probabilidades = [0.95, 0.90, 0.85, 0.80]
+
+# Ejecutamos el cálculo paso a paso
 resultado = regla_de_la_cadena(probabilidades)
 
-# Mostramos el resultado con un mensaje explicativo
-print("La probabilidad conjunta de los eventos A, B y C es:", resultado)
+# Identificar la etapa más débil
+min_prob = min(probabilidades)
+indice_min = probabilidades.index(min_prob)
+etapa_mas_debil = etapas[indice_min]
 
-# Explicación del resultado:
-# En este caso, el algoritmo calcula P(A ∩ B ∩ C) = 0.6 * 0.5 * 0.4 = 0.12
-# Esto significa que la probabilidad de que ocurran los tres eventos juntos es del 12%.
+print("===================================")
+print("La probabilidad final de que un módulo pase TODAS las etapas es:", round(resultado, 4))
+print("Esto equivale a", round(resultado*100, 2), "% de éxito en la producción.")
+print()
+print(f"La etapa más crítica a mejorar es: '{etapa_mas_debil}' con una probabilidad de {min_prob}.")
+print("Se recomienda enfocar esfuerzos de mejora en esta área para aumentar el éxito global.")

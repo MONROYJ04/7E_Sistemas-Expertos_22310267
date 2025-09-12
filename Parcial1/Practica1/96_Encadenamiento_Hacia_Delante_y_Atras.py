@@ -1,114 +1,113 @@
 # ------------------------------------------------------------------------------------
-# CÓDIGO EXPLICATIVO: ENCADENAMIENTO HACIA ADELANTE Y HACIA ATRÁS EN LÓGICA PROPOSICIONAL
+# CÓDIGO EDUCATIVO: ENCADENAMIENTO HACIA ADELANTE Y HACIA ATRÁS (APLICACIÓN EN INDUSTRIA)
 # ------------------------------------------------------------------------------------
-# Este programa implementa dos algoritmos fundamentales en lógica proposicional:
-# 1. Encadenamiento hacia adelante: Deriva nuevos hechos a partir de hechos iniciales y reglas.
-# 2. Encadenamiento hacia atrás: Verifica si un objetivo puede ser derivado a partir de hechos y reglas.
+# Este programa simula un sistema de reglas aplicado a la industria de manufactura.
+# Caso práctico: Diagnóstico de fallas en una máquina CNC.
+#
+# Reglas (si ... entonces ...):
+# 1. Si la máquina presenta vibración (A) y ruido extraño (B), entonces el husillo está dañado (C).
+# 2. Si el husillo está dañado (C), entonces la producción se detiene (D).
+# 3. Si la producción se detiene (D), entonces se requiere mantenimiento urgente (E).
+#
+# Hechos iniciales: vibración (A) y ruido extraño (B).
+#
+# Encadenamiento hacia adelante → descubre todos los hechos posibles a partir de A y B.
+# Encadenamiento hacia atrás → verifica si un objetivo (E = mantenimiento urgente) se puede derivar.
+# ------------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------------
-# PASO 1: DEFINICIÓN DE LAS REGLAS Y HECHOS INICIALES
-# ------------------------------------------------------------------------------------
-# - Las reglas son representadas como una lista de tuplas (condiciones, conclusión).
-# - Cada regla tiene una lista de condiciones que deben cumplirse para derivar la conclusión.
-# - Los hechos iniciales son los datos conocidos como verdaderos al inicio del proceso.
-
+# Definimos las reglas como pares: ([condiciones], conclusión)
 reglas = [
-    (["A", "B"], "C"),  # Si A y B son verdaderos, entonces C es verdadero.
-    (["C"], "D"),       # Si C es verdadero, entonces D es verdadero.
-    (["D"], "E")        # Si D es verdadero, entonces E es verdadero.
+    (["A", "B"], "C"),  # Si hay vibración y ruido extraño → husillo dañado.
+    (["C"], "D"),       # Si husillo dañado → producción se detiene.
+    (["D"], "E")        # Si producción detenida → mantenimiento urgente.
 ]
 
-hechos_iniciales = ["A", "B"]  # Hechos iniciales conocidos como verdaderos.
+# Hechos iniciales conocidos
+hechos_iniciales = ["A", "B"]  # Vibración y ruido extraño
 
 # ------------------------------------------------------------------------------------
-# PASO 2: FUNCIÓN PARA EL ENCADENAMIENTO HACIA ADELANTE
+# FUNCIÓN: Encadenamiento hacia adelante
 # ------------------------------------------------------------------------------------
-# - Esta función deriva nuevos hechos a partir de los hechos iniciales y las reglas.
-# - Utiliza un conjunto para almacenar los hechos derivados y evitar duplicados.
-# - Itera sobre las reglas hasta que no se puedan derivar más hechos nuevos.
-
 def encadenamiento_hacia_adelante(hechos, reglas):
     """
-    Realiza el encadenamiento hacia adelante para derivar nuevos hechos.
-    :param hechos: Lista de hechos iniciales.
-    :param reglas: Lista de reglas (condiciones, conclusión).
-    :return: Lista de todos los hechos derivados.
+    Deriva nuevos hechos a partir de los iniciales, mostrando cada paso.
     """
-    hechos_derivados = set(hechos)  # Usamos un conjunto para evitar duplicados.
-    cambio = True  # Variable para rastrear si se derivaron nuevos hechos.
+    hechos_derivados = set(hechos)  # Evitamos duplicados
+    cambio = True
+    paso = 1  # Contador de pasos para mostrar proceso
+
+    print("\n==============================================")
+    print("=== PROCESO: ENCADENAMIENTO HACIA ADELANTE ===")
+    print("==============================================")
+    print("Hechos iniciales:", hechos)
+    print("----------------------------------------------")
 
     while cambio:
         cambio = False
         for condiciones, conclusion in reglas:
-            # Verificamos si todas las condiciones de la regla son verdaderas.
+            # Verificamos si todas las condiciones se cumplen
             if all(condicion in hechos_derivados for condicion in condiciones):
                 if conclusion not in hechos_derivados:
-                    hechos_derivados.add(conclusion)  # Agregamos la conclusión como un nuevo hecho.
-                    cambio = True  # Indicamos que hubo un cambio.
+                    print(f"\nPaso {paso}: Se cumplen {condiciones} → Se añade '{conclusion}' a los hechos.")
+                    hechos_derivados.add(conclusion)
+                    print(f"  Hechos actuales: {sorted(list(hechos_derivados))}")
+                    cambio = True
+                    paso += 1
+    print("\n----------------------------------------------")
+    print("RESUMEN FINAL (Hacia Adelante):")
+    print("Hechos derivados finales:", sorted(list(hechos_derivados)))
+    print("==============================================\n")
     return list(hechos_derivados)
 
 # ------------------------------------------------------------------------------------
-# PASO 3: FUNCIÓN PARA EL ENCADENAMIENTO HACIA ATRÁS
+# FUNCIÓN: Encadenamiento hacia atrás
 # ------------------------------------------------------------------------------------
-# - Esta función verifica si un objetivo puede ser derivado a partir de los hechos y reglas.
-# - Parte del objetivo y busca si puede ser derivado mediante las reglas.
-# - Si el objetivo depende de otros hechos, verifica recursivamente si estos pueden ser derivados.
+def encadenamiento_hacia_atras(objetivo, hechos, reglas, nivel=1):
+    """
+    Verifica si un objetivo puede derivarse, mostrando la recursión paso a paso.
+    """
+    indent = "  " * (nivel - 1)  # Sangría para ver recursión
+    print(f"{indent}¿Podemos derivar '{objetivo}'?")
 
-def encadenamiento_hacia_atras(objetivo, hechos, reglas):
-    """
-    Realiza el encadenamiento hacia atrás para verificar si un objetivo puede ser derivado.
-    :param objetivo: El hecho que queremos verificar.
-    :param hechos: Lista de hechos iniciales.
-    :param reglas: Lista de reglas (condiciones, conclusión).
-    :return: True si el objetivo puede ser derivado, False en caso contrario.
-    """
+    # Caso base: el hecho ya está en los iniciales
     if objetivo in hechos:
-        return True  # El objetivo ya es un hecho conocido.
+        print(f"{indent}✔ '{objetivo}' es un hecho conocido (base de hechos).")
+        return True
 
+    # Recorremos reglas que concluyan el objetivo
     for condiciones, conclusion in reglas:
         if conclusion == objetivo:
-            # Verificamos si todas las condiciones de la regla pueden ser derivadas.
-            if all(encadenamiento_hacia_atras(condicion, hechos, reglas) for condicion in condiciones):
+            print(f"{indent}Regla encontrada: Si {condiciones} entonces {conclusion}")
+            # Verificamos cada condición recursivamente
+            todas_cumplen = True
+            for cond in condiciones:
+                if not encadenamiento_hacia_atras(cond, hechos, reglas, nivel + 1):
+                    todas_cumplen = False
+            if todas_cumplen:
+                print(f"{indent}✔ '{objetivo}' puede derivarse (todas las condiciones se cumplen).")
                 return True
+
+    print(f"{indent}✘ '{objetivo}' NO puede derivarse (no se cumplen todas las condiciones o no hay regla).")
     return False
 
 # ------------------------------------------------------------------------------------
-# PASO 4: EJEMPLO PRÁCTICO
+# EJECUCIÓN DEL CÓDIGO
 # ------------------------------------------------------------------------------------
-# - Este ejemplo muestra cómo funcionan ambos algoritmos con un conjunto de reglas y hechos iniciales.
-# - Encadenamiento hacia adelante: Deriva todos los hechos posibles.
-# - Encadenamiento hacia atrás: Verifica si un objetivo específico puede ser derivado.
-
 if __name__ == "__main__":
-    # Encadenamiento hacia adelante
-    print("Encadenamiento hacia adelante:")
+    # Hacia adelante
     hechos_finales = encadenamiento_hacia_adelante(hechos_iniciales, reglas)
-    print("Hechos derivados:", hechos_finales)
 
-    # Encadenamiento hacia atrás
-    print("\nEncadenamiento hacia atrás:")
-    objetivo = "E"  # Queremos verificar si E puede ser derivado.
-    puede_derivarse = encadenamiento_hacia_atras(objetivo, hechos_iniciales, reglas)
-    print(f"¿El objetivo '{objetivo}' puede ser derivado?:", puede_derivarse)
-
-# ------------------------------------------------------------------------------------
-# EXPLICACIÓN DETALLADA DEL ALGORITMO
-# ------------------------------------------------------------------------------------
-# 1. Encadenamiento hacia adelante:
-#    - Parte de los hechos iniciales y aplica las reglas para derivar nuevos hechos.
-#    - Se detiene cuando no se pueden derivar más hechos nuevos.
-#    - Ventaja: Útil para descubrir todos los hechos posibles a partir de un conjunto inicial.
-#
-# 2. Encadenamiento hacia atrás:
-#    - Parte de un objetivo y verifica si puede ser derivado mediante las reglas.
-#    - Utiliza recursión para verificar las dependencias de las condiciones.
-#    - Ventaja: Útil para responder preguntas específicas sobre si un hecho puede ser derivado.
-#
-# Suposiciones clave:
-# - Las reglas son determinísticas (si las condiciones se cumplen, la conclusión es verdadera).
-# - Los hechos iniciales son correctos y completos.
-#
-# Ventajas:
-# - Ambos algoritmos son simples y efectivos para sistemas basados en reglas.
-# Limitaciones:
-# - No manejan incertidumbre ni conflictos entre reglas.
+    # Hacia atrás
+    print("\n==============================================")
+    print("=== PROCESO: ENCADENAMIENTO HACIA ATRÁS   ===")
+    print("==============================================")
+    objetivo = "E"  # Queremos verificar si se puede concluir "mantenimiento urgente"
+    print(f"\nObjetivo a verificar: '{objetivo}' (¿Se puede derivar?)\n")
+    resultado = encadenamiento_hacia_atras(objetivo, hechos_iniciales, reglas)
+    print("\n----------------------------------------------")
+    print("RESUMEN FINAL (Hacia Atrás):")
+    if resultado:
+        print(f"✔ El objetivo '{objetivo}' SÍ puede derivarse a partir de los hechos iniciales y las reglas.")
+    else:
+        print(f"✘ El objetivo '{objetivo}' NO puede derivarse a partir de los hechos iniciales y las reglas.")
+    print("==============================================\n")
