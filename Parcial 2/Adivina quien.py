@@ -1,6 +1,6 @@
 # ------------------------------------------------------
 # Sistema Experto Mejorado "Adivina Quién - Naruto Edition"
-# 32 personajes, sin librerías externas
+# 32 personajes
 # ------------------------------------------------------
 
 # -------------------------------
