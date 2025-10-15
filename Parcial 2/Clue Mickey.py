@@ -85,8 +85,22 @@ def menu_principal():
     opcion = input("Selecciona una opción (1-5): ")
     return opcion
 
+def elegir_opcion(lista, tipo):
+    print(f"\nElige {tipo}:")
+    for i, item in enumerate(lista, 1):
+        print(f"{i}. {item}")
+    while True:
+        try:
+            eleccion = int(input(f"Selecciona una opción (1-{len(lista)}): "))
+            if 1 <= eleccion <= len(lista):
+                return lista[eleccion - 1]
+            else:
+                print("❗ Número fuera de rango, intenta de nuevo.")
+        except ValueError:
+            print("❗ Ingresa un número válido.")
+
 def interrogar():
-    sospechoso = random.choice(personajes)
+    sospechoso = elegir_opcion(personajes, "a quién interrogar")
     pista = random.choice(pistas[sospechoso])
     print(f"\n👤 Interrogas a {sospechoso} ({profesiones[sospechoso]}):")
     time.sleep(1)
@@ -96,7 +110,7 @@ def interrogar():
     input("\nPresiona ENTER para continuar...")
 
 def visitar_lugar():
-    lugar = random.choice(locaciones)
+    lugar = elegir_opcion(locaciones, "el lugar a visitar")
     print(f"\n🏠 Visitas {lugar}...")
     time.sleep(1)
     if lugar == lugar_crimen:
@@ -106,7 +120,7 @@ def visitar_lugar():
     input("\nPresiona ENTER para continuar...")
 
 def examinar_arma():
-    arma = random.choice(armas)
+    arma = elegir_opcion(armas, "el objeto que deseas examinar")
     print(f"\n🔧 Inspeccionas {arma}...")
     time.sleep(1)
     if arma == arma_usada:
@@ -117,9 +131,9 @@ def examinar_arma():
 
 def acusar():
     print("\n⚖️ Es momento de hacer tu acusación final.")
-    sospechoso = input("¿Quién crees que fue el culpable?: ")
-    arma = input("¿Con qué arma lo hizo?: ")
-    lugar = input("¿En qué lugar ocurrió?: ")
+    sospechoso = elegir_opcion(personajes, "quién crees que fue el culpable")
+    arma = elegir_opcion(armas, "con qué lo hizo")
+    lugar = elegir_opcion(locaciones, "en qué lugar ocurrió")
 
     print("\nRevisando tu acusación...")
     time.sleep(2)
