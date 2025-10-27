@@ -1,0 +1,19 @@
+Adivina Quién - Naruto Edition
+
+Pequeño juego estilo "Adivina Quién" con personajes de Naruto. Responde preguntas para adivinar el personaje.
+
+Instrucciones rápidas:
+- Extrae el ZIP y ejecuta AdivinaQuien.exe
+- Usa el menú para jugar, agregar personajes o salir.
+
+Controles:
+- Interfaz con botones: Sí / No / No sé para responder preguntas.
+
+Notas para la página de itch.io:
+- Plataforma: Windows (ZIP con .exe)
+- Incluir instrucciones: "Extrae y ejecuta AdivinaQuien.exe"
+- Añadir capturas de pantalla mostrando la ventana principal y una pantalla de juego.
+
+Licencia: Libre para uso educativo y personal. No comercial.
+
+Si quieres, puedo generar un README más detallado o preparar capturas reales (necesitaría que me indiques qué pantallas quieres mostrar).
