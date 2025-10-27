@@ -1,0 +1,7 @@
+# Este proyecto no requiere paquetes externos instalables por pip.
+# Usa la biblioteca estándar de Python: tkinter y random.
+# Instrucciones:
+# - Para ejecutar desde código fuente en Windows, asegúrate de tener Python instalado
+#   (recomendado Python 3.8+). tkinter viene incluido en la mayoría de instalaciones de CPython en Windows.
+# - Si quieres crear un ejecutable, usa el script build_windows.ps1 incluido o ejecuta:
+#   env\Scripts\python.exe -m PyInstaller --onefile --name "ClueMickey" "Clue Mickey.py"
