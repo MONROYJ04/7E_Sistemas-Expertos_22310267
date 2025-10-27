@@ -1,6 +1,6 @@
 # ------------------------------------------------------
 # Adivina Quién - Naruto Edition (Interfaz Visual Final)
-# 15 personajes completos
+# 15 personajes completos (versión corregida)
 # ------------------------------------------------------
 
 import PySimpleGUI as sg
@@ -14,8 +14,8 @@ import os
 # -------------------------------
 STOPWORDS = {
     "el","la","los","las","un","una","unos","unas","y","o","de","del","que","es","en","por","con",
-    "para","su","sus","al","se","lo","como","su","este","esta","estos","estas","ha","han","pero","no",
-    "una","uno","tu","tú","si","sí","fue","son","ser","esta","esta"
+    "para","su","sus","al","se","lo","como","este","esta","estos","estas","ha","han","pero","no",
+    "tu","tú","si","sí","fue","son","ser"
 }
 
 JSON_FILE = "personajes.json"
@@ -60,11 +60,13 @@ def generar_regex_keywords(keywords: list) -> str:
     if not keywords:
         return None
     esc = [re.escape(k) for k in keywords]
-    pattern = r'\b(?:' + '|'.join(esc) + r')\b'
+    pattern = r'\\b(?:' + '|'.join(esc) + r')\\b'
     return pattern
 
 def procesar_pregunta_clave(raw: str):
     frase = limpiar_texto(raw)
+    if not frase:
+        return {"pregunta_canonica": "", "keywords": [], "regex": ""}
     pregunta = formar_pregunta_canonica(frase)
     keywords = extraer_keywords(frase)
     regex = generar_regex_keywords(keywords)
@@ -79,10 +81,13 @@ def procesar_pregunta_clave(raw: str):
 # -------------------------------
 def cargar_personajes():
     if os.path.exists(JSON_FILE):
-        with open(JSON_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open(JSON_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return personajes_base[:]  # copia segura
     else:
-        return personajes_base.copy()
+        return personajes_base[:]  # copia segura
 
 def guardar_personajes(lista):
     with open(JSON_FILE, 'w', encoding='utf-8') as f:
@@ -105,7 +110,7 @@ def preguntar_bool_gui(pregunta):
         elif event == "No":
             window.close()
             return False
-        elif event == "No sé" or event == sg.WIN_CLOSED:
+        elif event in ("No sé", sg.WIN_CLOSED):
             window.close()
             return None
 
@@ -115,13 +120,16 @@ def preguntar_clave_gui(p_personaje):
     layout = [
         [sg.Text(pregunta)],
         [sg.Input(key="-RESP-")],
-        [sg.Button("Enviar")]
+        [sg.Button("Enviar"), sg.Button("No sé")]
     ]
     window = sg.Window("Pregunta Clave", layout)
     while True:
         event, values = window.read()
         if event == "Enviar":
             respuesta = values["-RESP-"].strip()
+            if not respuesta:
+                window.close()
+                return None
             low = respuesta.lower()
             if low in ["si", "sí"]:
                 window.close()
@@ -129,9 +137,6 @@ def preguntar_clave_gui(p_personaje):
             elif low == "no":
                 window.close()
                 return False
-            elif low == "no_se":
-                window.close()
-                return None
             normalizada = quitar_acentos(low)
             if regex and re.search(regex, normalizada):
                 window.close()
@@ -139,7 +144,7 @@ def preguntar_clave_gui(p_personaje):
             else:
                 window.close()
                 return None
-        if event == sg.WIN_CLOSED:
+        elif event in ("No sé", sg.WIN_CLOSED):
             window.close()
             return None
 
@@ -157,7 +162,7 @@ def jugar_gui():
     candidatos = personajes.copy()
     for attr in hechos:
         if hechos[attr] is not None:
-            candidatos = [p for p in candidatos if p[attr] == hechos[attr]]
+            candidatos = [p for p in candidatos if p.get(attr) == hechos[attr]]
 
     if not candidatos:
         sg.popup("No se pudo determinar ningún personaje con esas respuestas.")
@@ -178,8 +183,6 @@ def jugar_gui():
             if res is True:
                 sg.popup(f"¡Genial! Se adivinó a {p['nombre']}")
                 return
-            elif res is False:
-                candidatos.remove(p)
             else:
                 candidatos.remove(p)
 
@@ -195,8 +198,15 @@ def aprender_personaje_gui():
     ]
     window = sg.Window("Agregar Personaje", layout)
     event, values = window.read()
+    if event != "Continuar":
+        window.close()
+        return
     nombre = values["-NOMBRE-"].strip()
     window.close()
+
+    if not nombre:
+        sg.popup("Debe ingresar un nombre válido.")
+        return
 
     nuevo = {"nombre": nombre}
     nuevo["lider"] = preguntar_bool_gui("¿Es líder o Hokage?")
@@ -208,7 +218,7 @@ def aprender_personaje_gui():
     nuevo["akatsuki"] = preguntar_bool_gui("¿Pertenece a Akatsuki?")
 
     raw_clave = sg.popup_get_text("Ingresa la pregunta clave diferenciadora del personaje:")
-    clave_procesada = procesar_pregunta_clave(raw_clave)
+    clave_procesada = procesar_pregunta_clave(raw_clave or "")
     nuevo.update({
         "pregunta_clave": clave_procesada["pregunta_canonica"],
         "pregunta_clave_regex": clave_procesada["regex"]
@@ -224,63 +234,64 @@ def aprender_personaje_gui():
 personajes_base = [
     {"nombre": "Naruto Uzumaki", "pelo": "rubio", "aldea": "konoha", "clan": "ninguno",
      "lider": True, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": False, "akatsuki": False, "pregunta_clave": "¿Es el protagonista rubio?", "pregunta_clave_regex": "\\b(?:protagonista|rubio)\\b"},
-
+     "sannin": False, "inteligente": False, "akatsuki": False,
+     "pregunta_clave": "¿Es el protagonista rubio?", "pregunta_clave_regex": "\\b(?:protagonista|rubio)\\b"},
     {"nombre": "Sasuke Uchiha", "pelo": "negro", "aldea": "konoha", "clan": "uchiha",
      "lider": False, "mascara": False, "sharingan": True, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Tiene Sharingan y es del clan Uchiha?", "pregunta_clave_regex": "\\b(?:sharingan|uchiha)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Tiene Sharingan y es del clan Uchiha?", "pregunta_clave_regex": "\\b(?:sharingan|uchiha)\\b"},
     {"nombre": "Sakura Haruno", "pelo": "rosa", "aldea": "konoha", "clan": "ninguno",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Tiene cabello rosa y es muy inteligente?", "pregunta_clave_regex": "\\b(?:rosa|inteligente)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Tiene cabello rosa y es muy inteligente?", "pregunta_clave_regex": "\\b(?:rosa|inteligente)\\b"},
     {"nombre": "Kakashi Hatake", "pelo": "blanco", "aldea": "konoha", "clan": "ninguno",
      "lider": False, "mascara": True, "sharingan": True, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Usa una máscara cubriendo su rostro?", "pregunta_clave_regex": "\\b(?:mascara|rostro)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Usa una máscara cubriendo su rostro?", "pregunta_clave_regex": "\\b(?:mascara|rostro)\\b"},
     {"nombre": "Hinata Hyuga", "pelo": "negro", "aldea": "konoha", "clan": "hyuga",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": True,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Tiene Byakugan?", "pregunta_clave_regex": "\\b(?:byakugan)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Tiene Byakugan?", "pregunta_clave_regex": "\\b(?:byakugan)\\b"},
     {"nombre": "Itachi Uchiha", "pelo": "negro", "aldea": "konoha", "clan": "uchiha",
      "lider": False, "mascara": False, "sharingan": True, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": True, "pregunta_clave": "¿Es miembro de Akatsuki?", "pregunta_clave_regex": "\\b(?:akatsuki)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": True,
+     "pregunta_clave": "¿Es miembro de Akatsuki?", "pregunta_clave_regex": "\\b(?:akatsuki)\\b"},
     {"nombre": "Jiraiya", "pelo": "blanco", "aldea": "konoha", "clan": "ninguno",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": True, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Es uno de los Sannin legendarios?", "pregunta_clave_regex": "\\b(?:sannin)\\b"},
-
+     "sannin": True, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Es uno de los Sannin legendarios?", "pregunta_clave_regex": "\\b(?:sannin)\\b"},
     {"nombre": "Tsunade", "pelo": "rubio", "aldea": "konoha", "clan": "ninguno",
      "lider": True, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": True, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Es mujer líder y Sannin?", "pregunta_clave_regex": "\\b(?:mujer|lider|sannin)\\b"},
-
+     "sannin": True, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Es mujer líder y Sannin?", "pregunta_clave_regex": "\\b(?:mujer|lider|sannin)\\b"},
     {"nombre": "Gaara", "pelo": "rojo", "aldea": "suna", "clan": "ninguno",
      "lider": True, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Es de Suna y líder?", "pregunta_clave_regex": "\\b(?:suna|lider)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Es de Suna y líder?", "pregunta_clave_regex": "\\b(?:suna|lider)\\b"},
     {"nombre": "Shikamaru Nara", "pelo": "negro", "aldea": "konoha", "clan": "ninguno",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Es estratega inteligente?", "pregunta_clave_regex": "\\b(?:estratega|inteligente)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Es estratega inteligente?", "pregunta_clave_regex": "\\b(?:estratega|inteligente)\\b"},
     {"nombre": "Neji Hyuga", "pelo": "negro", "aldea": "konoha", "clan": "hyuga",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": True,
-     "sannin": False, "inteligente": True, "akatsuki": False, "pregunta_clave": "¿Tiene Byakugan y es miembro del clan Hyuga?", "pregunta_clave_regex": "\\b(?:byakugan|hyuga)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": False,
+     "pregunta_clave": "¿Tiene Byakugan y es miembro del clan Hyuga?", "pregunta_clave_regex": "\\b(?:byakugan|hyuga)\\b"},
     {"nombre": "Rock Lee", "pelo": "negro", "aldea": "konoha", "clan": "ninguno",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": False, "akatsuki": False, "pregunta_clave": "¿Es experto en taijutsu sin habilidades oculares?", "pregunta_clave_regex": "\\b(?:taijutsu)\\b"},
-
+     "sannin": False, "inteligente": False, "akatsuki": False,
+     "pregunta_clave": "¿Es experto en taijutsu sin habilidades oculares?", "pregunta_clave_regex": "\\b(?:taijutsu)\\b"},
     {"nombre": "Pain", "pelo": "naranja", "aldea": "akatsuki", "clan": "ninguno",
      "lider": True, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": True, "pregunta_clave": "¿Es líder de Akatsuki con cabello naranja?", "pregunta_clave_regex": "\\b(?:akatsuki|lider|naranja)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": True,
+     "pregunta_clave": "¿Es líder de Akatsuki con cabello naranja?", "pregunta_clave_regex": "\\b(?:akatsuki|lider|naranja)\\b"},
     {"nombre": "Konan", "pelo": "azul", "aldea": "akatsuki", "clan": "ninguno",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": True, "akatsuki": True, "pregunta_clave": "¿Es mujer miembro de Akatsuki con cabello azul?", "pregunta_clave_regex": "\\b(?:akatsuki|mujer|azul)\\b"},
-
+     "sannin": False, "inteligente": True, "akatsuki": True,
+     "pregunta_clave": "¿Es mujer miembro de Akatsuki con cabello azul?", "pregunta_clave_regex": "\\b(?:akatsuki|mujer|azul)\\b"},
     {"nombre": "Kisame Hoshigaki", "pelo": "azul", "aldea": "akatsuki", "clan": "ninguno",
      "lider": False, "mascara": False, "sharingan": False, "byakugan": False,
-     "sannin": False, "inteligente": False, "akatsuki": True, "pregunta_clave": "¿Es miembro de Akatsuki con cabello azul y gran espada?", "pregunta_clave_regex": "\\b(?:akatsuki|azul|espada)\\b"}
+     "sannin": False, "inteligente": False, "akatsuki": True,
+     "pregunta_clave": "¿Es miembro de Akatsuki con cabello azul y gran espada?", "pregunta_clave_regex": "\\b(?:akatsuki|azul|espada)\\b"}
 ]
 
 # -------------------------------
